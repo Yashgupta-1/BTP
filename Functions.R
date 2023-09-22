@@ -1,30 +1,30 @@
 #Plotting transcripts from two different sources.
 
 plot_gene_from_gtf <- function(gtf_path_1, gtf_path_2, gene_name, species_1 = "Species 1", species_2 = "Species 2") {
-  
+  #packages
   library(rtracklayer)
   library(dplyr)
   library(ggtranscript)
   library(ggplot2)
   library(gridExtra)
   
-  
+  #importing gtf file
   genome_1 <- import(gtf_path_1)
   genome_2 <- import(gtf_path_2)
   
-  
+  #data frame creation
   df_1 <- as.data.frame(genome_1)
   df_2 <- as.data.frame(genome_2)
   
-  
+  #extracting gene_id
   gene_id_1 <- unique(genome_1[genome_1$gene_name == gene_name,]$gene_id)
   gene_id_2 <- unique(genome_2[genome_2$gene_name == gene_name,]$gene_id)
   
-  
+  #extracting gene annotation data
   gene_1 <- subset(df_1, gene_id == gene_id_1 & type == 'exon')
   gene_2 <- subset(df_2, gene_id == gene_id_2 & type == 'exon')
   
-  
+  #plotting the first graph
   plot_1 <- gene_1 %>%
     ggplot(aes(xstart = start, xend = end, y = transcript_id)) +
     geom_range(aes(fill = paste(species_1, 'Exon')), color = 'darkblue', height = 0.3) +
@@ -34,7 +34,7 @@ plot_gene_from_gtf <- function(gtf_path_1, gtf_path_2, gene_name, species_1 = "S
     theme(legend.position = 'none', plot.title = element_text(hjust = 1), axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank(), plot.margin = margin(0.5, 0.5, 0.5, 0.5, 'cm')) +
     scale_fill_manual(values = c(paste(species_1, 'Exon') = 'darkblue'))
   
-  
+  #plotting the second graph
   plot_2 <- gene_2 %>%
     ggplot(aes(xstart = start, xend = end, y = transcript_id)) +
     geom_range(aes(fill = paste(species_2, 'Exon')), color = 'red', height = 0.3) +
@@ -44,7 +44,7 @@ plot_gene_from_gtf <- function(gtf_path_1, gtf_path_2, gene_name, species_1 = "S
     theme(legend.position = 'none', plot.title = element_text(hjust = 1), axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank(), plot.margin = margin(0.5, 0.5, 0.5, 0.5, 'cm')) +
     scale_fill_manual(values = c(paste(species_2, 'Exon') = 'red'))
   
-  
+  #combining the plots
   combined_plot <- grid.arrange(plot_1, plot_2, ncol = 1)
   
   return(combined_plot)
@@ -53,6 +53,7 @@ plot_gene_from_gtf <- function(gtf_path_1, gtf_path_2, gene_name, species_1 = "S
 
 #######Plotting transcripts along with their counts
 
+#packages
 library(BiocManager)
 library(rtracklayer)
 library(dplyr)
@@ -64,18 +65,20 @@ library(scales)
 library(gridExtra)
 library(ggpubr)
 
+#function
 plot_transcript_samples <- function(gtf_file_path, count_matrix, transcript_id) {
-  
+  #gtf file importing
   gtf_file <- import(gtf_file_path)
   
-  
+  #data frame creation
   gtf_df <- as.data.frame(gtf_file)
-  
+
+  #annotation data extraction
   selected_transcript <- gtf_df %>% filter(transcript_id == transcript_id & type == "exon")
   
   all_colors <- c("exon" = "green", "intron" = "blue")
   
- 
+ #creating a list of plots
   plots_list <- list()
   
 
@@ -89,7 +92,7 @@ plot_transcript_samples <- function(gtf_file_path, count_matrix, transcript_id) 
       return(df)
     }) %>% bind_rows()
     
-    
+    #plotting
     plot <- ggplot(replicated_transcript) +
       geom_range(aes(xstart = start, xend = end, 
                      y = interaction(transcript_id, y_position), 
@@ -113,7 +116,7 @@ plot_transcript_samples <- function(gtf_file_path, count_matrix, transcript_id) 
     plots_list[[i]] <- plot
   }
   
-  
+  #combining
   combined_plot <- do.call(grid.arrange, c(plots_list, list(ncol = 1)))
   
   return(combined_plot)
