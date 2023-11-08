@@ -1,0 +1,68 @@
+
+colors <- scales::hue_pal()(nrow(transcripts_of_gene))
+
+
+# Initialize the plot
+plot <- ggplot() +
+  theme_minimal() +
+  labs(title = 'SRRM4', y = NULL, x = NULL) +
+  theme(legend.position = 'none', 
+        plot.title = element_text(hjust = 1), 
+        axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.title.y = element_blank(), 
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, 'cm'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_fill_manual(values = colors) +
+  scale_y_continuous(limits = c(0, 40))
+
+max_y <- 15  # Initialize max_y
+
+# Loop through each sample
+for (i in 1:1) {
+  # Loop through each transcript for the current sample
+  transcript_index = 1
+  for (transcript in transcripts_of_gene$transcript_id) {
+    selected_transcript <- gencode_df %>% filter(transcript_id == transcript & type == 'exon')
+    
+    count <- transcripts_of_gene[transcripts_of_gene$transcript_id == transcript, paste0("Sample_", i)]
+    
+    # Replicating the transcript data based on the count
+    replicated_transcript <- lapply(1:count, function(j) {
+      df <- selected_transcript
+      df$y_position <- max_y + j * 2  # Adjust y position
+      return(df)
+    }) %>% bind_rows()
+    
+    # Create intron data and replicate it
+    intron_data <- to_intron(selected_transcript, 'transcript_id')
+    replicated_intron <- lapply(1:count, function(j) {
+      df <- intron_data
+      df$y_position <- max_y + j * 2
+      return(df)
+    }) %>% bind_rows()
+    
+    max_y <- max(as.numeric(as.character(replicated_transcript$y_position)))
+    
+    # Add to the plot using the transcript's index to select the color
+    plot <- plot +
+      geom_range(data = replicated_transcript, 
+                 aes(xstart = start, xend = end, y = as.numeric(as.character(y_position)), fill = as.factor(transcript_index)), 
+                 color = colors[transcript_index], 
+                 height = 0.6) +
+      geom_intron(data = replicated_intron, 
+                  aes(xstart = start, xend = end, y = as.numeric(as.character(y_position)), strand = strand), 
+                  color = colors[transcript_index], 
+                  arrow = NULL)
+    
+    transcript_index <- transcript_index + 1
+  }
+  
+  
+}
+
+# Display the plot
+print(plot)
