@@ -1,0 +1,89 @@
+gene_of_interest <- "SRRM4"
+gene_info <- gencode_df %>%
+  filter(gene_name == gene_of_interest) %>%
+  select(transcript_id, strand) %>%
+  distinct()
+
+# Check if there is only one unique strand for all transcripts of the gene
+if (n_distinct(gene_info$strand) != 1) {
+  stop("The gene has transcripts on different strands. Please check your data.")
+}
+
+# Extract the strand information
+gene_strand <- unique(gene_info$strand)
+
+# Assuming transcripts_of_gene is a dataframe that contains transcript counts for each sample
+# Check if the total count exceeds 50
+total_count <- sum(transcripts_of_gene$count)
+if (total_count > 50) {
+  stop("Total count of all transcripts exceeds 50. Please sub-sample your count matrix.")
+}
+
+# Initialize colors and plot
+colors <- scales::hue_pal()(nrow(transcripts_of_gene))
+plot <- ggplot() + theme_minimal()
+
+# Initialize variables for plotting
+max_y <- 0
+max_x <- 0
+sample_columns <- setdiff(names(transcripts_of_gene), "transcript_id")
+
+# Loop through each sample column
+for (i in seq_along(sample_columns)) {
+  sample_column <- sample_columns[i]
+  
+  # Loop through each transcript for the current sample
+  for (transcript in transcripts_of_gene$transcript_id) {
+    selected_transcript <- gencode_df %>%
+      filter(transcript_id == transcript & type == 'exon')
+    
+    count <- transcripts_of_gene %>%
+      filter(transcript_id == transcript) %>%
+      pull(!!sym(sample_column))
+    
+    # Check if count is numeric and greater than 0
+    if (!is.numeric(count) || count <= 0) next
+    
+    # Update max_x to the maximum x end value used
+    max_x <- max(max_x, max(selected_transcript$end))
+    
+    # Replicate the transcript data based on the count
+    replicated_transcript <- map_df(seq_len(count), ~ {
+      df <- selected_transcript
+      df$y_position <- max_y + (.x - 1) * 2  # Adjust y position
+      df
+    })
+    
+    # Add to the plot
+    plot <- plot +
+      geom_segment(data = replicated_transcript, 
+                   aes(x = start, xend = end, y = y_position, yend = y_position, color = as.factor(i)),
+                   size = 1)
+    
+    # Adjust max_y for spacing
+    max_y <- max(replicated_transcript$y_position) + 2
+  }
+  
+  # Add sample title outside the plotting area
+  plot <- plot + annotate("text", x = max_x + 1, y = max_y, label = sample_column, hjust = 0, size = 4, color = colors[i])
+}
+
+# Add rectangles or other annotations here
+
+# Flip the plot if the gene is on the '-' strand
+if (gene_strand == "-") {
+  plot <- plot + coord_flip()
+}
+
+# Finalize the plot with additional themes and labels
+plot <- plot + 
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(1, 4, 1, 1), "lines")) +
+  labs(x = NULL, y = NULL)
+
+# Display the plot
+print(plot)
