@@ -1,0 +1,12 @@
+Description:
+
+GeneVisR is a comprehensive R package designed to facilitate the visualization and analysis of gene and transcript data within the field of molecular biology and biotechnology. 
+This package provides a suite of tools that enable researchers to interpret complex genomic data through intuitive and informative graphical representations.
+
+Key Features:
+
+Gene and Transcript Visualization: Generate detailed plots of gene and transcript structures, including exons, introns, UTRs, and CDS, with support for both positive and negative strand genes.
+Strand-Specific Plotting: Automatically adjusts visualizations based on the strand orientation of the gene, ensuring accurate representation of transcriptional directionality.
+Count Matrix Analysis: Offers functionality to handle count matrices from gene expression data, allowing for the visualization of expression levels across multiple samples.
+Dynamic Subsampling: Includes a built-in mechanism to prompt for subsampling when data exceeds a specified threshold, ensuring manageable and interpretable visual outputs.
+Customizable Aesthetics: Users can easily customize plots with a range of aesthetic options, adapting the visual output to fit publication standards or personal preferences.
