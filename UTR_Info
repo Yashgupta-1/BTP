@@ -1,0 +1,31 @@
+cds_midpoints <- gencode_df %>%
+  filter(type == "CDS") %>%
+  group_by(transcript_id) %>%
+  summarize(midpoint = mean(start + end) / 2, .groups = "drop")
+
+# Extract UTR entries and classify them based on their position relative to the CDS midpoint
+utr_classified <- gencode_df %>%
+  filter(type == "UTR") %>%
+  left_join(cds_midpoints, by = "transcript_id") %>%
+  mutate(UTR_Type = case_when(
+    strand == "+" & start > midpoint ~ "3'UTR",
+    strand == "+" & start <= midpoint ~ "5'UTR",
+    strand == "-" & start > midpoint ~ "5'UTR",
+    strand == "-" & start <= midpoint ~ "3'UTR"
+  ))
+
+# Merge UTR segments for each transcript
+merged_utrs <- utr_classified %>%
+  group_by(gene_id, transcript_id, UTR_Type, strand) %>%
+  summarize(
+    start = min(start),
+    end = max(end),
+    .groups = "drop"
+  )
+
+# Create a final dataframe with the necessary columns
+final_utr_df <- merged_utrs %>%
+  select(gene_id, transcript_id, UTR_Type, start, end, strand)
+
+# View the final UTR dataframe
+print(final_utr_df)
