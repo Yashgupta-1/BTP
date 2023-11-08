@@ -1,0 +1,50 @@
+library(BiocManager)
+library(rtracklayer)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(ggtranscript)
+library(ggplot2)
+library(scales)
+library(gridExtra)
+library(ggpubr)
+
+gencode_file1 <- import("C:\\Users\\Yash\\Desktop\\BTP- Yash Gupa_Prof. Ishaan\\First_Task_BTP\\data_files\\gencode.v44.annotation.gtf")
+gencode_df <- as.data.frame(gencode_file1)
+
+
+extracted_data <- gencode_df %>%
+  filter(!is.na(transcript_id)) %>%
+  group_by(gene_id) %>%
+  summarize(transcript_ids = list(unique(transcript_id))) %>%
+  ungroup()
+
+transcript_counts <- gencode_df %>%
+  group_by(gene_id) %>%
+  summarize(num_transcripts = n_distinct(transcript_id)) %>%
+  ungroup()
+
+transcripts_of_gene <- gencode_df %>%
+  filter(gene_name == "SRRM4") %>%
+  select(transcript_id) %>%
+  distinct()
+
+transcripts_of_gene <- transcripts_of_gene %>% 
+  filter(!is.na(transcript_id))
+
+set.seed(123) 
+transcripts_of_gene <- transcripts_of_gene %>%
+  mutate(Sample_1 = sample(1:1, nrow(transcripts_of_gene), replace = TRUE),
+         Sample_2 = sample(1:5, nrow(transcripts_of_gene), replace = TRUE),
+         Sample_3 = sample(1:5, nrow(transcripts_of_gene), replace = TRUE))
+
+
+colors <- scales::hue_pal()(nrow(transcripts_of_gene))
+
+rectangle_start <- 119156796
+rectangle_end <- 119163051
+
+rectangle_start1 <- 118981541
+rectangle_end1 <- 118981882
+
+sample_columns <- setdiff(names(transcripts_of_gene), "transcript_id")
