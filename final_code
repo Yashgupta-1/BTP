@@ -120,7 +120,7 @@ for (i in seq_along(sample_columns)) {
 
 # Flip the plot if the gene is on the '-' strand
 if (gene_strand == "-") {
-  plot <- plot + coord_flip()
+  plot <- plot + scale_x_reverse()
   # Add extra space on the right of the plot for the sample titles
   plot_margin_right <- 3  # Adjust this value as needed to fit the sample titles
   plot <- plot + theme(plot.margin = margin(0.5, plot_margin_right, 0.5, 0.5, 'cm'))
